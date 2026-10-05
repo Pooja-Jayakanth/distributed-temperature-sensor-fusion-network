@@ -1,0 +1,559 @@
+[
+    {
+        "id": "thermal_monitoring_flow",
+        "type": "tab",
+        "label": "Thermal Monitoring System",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "mqtt_broker_192",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Broker",
+        "broker": "192.168.184.135",
+        "port": "1883",
+        "clientid": "NodeRED_Thermal_Client",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "ui_tab_thermal",
+        "type": "ui_tab",
+        "name": "Thermal Dashboard",
+        "icon": "dashboard",
+        "order": 1
+    },
+    {
+        "id": "ui_grp_boxes",
+        "type": "ui_group",
+        "name": "Readings",
+        "tab": "ui_tab_thermal",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "ui_grp_charts",
+        "type": "ui_group",
+        "name": "Temperature History",
+        "tab": "ui_tab_thermal",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "ui_grp_map",
+        "type": "ui_group",
+        "name": "Spatial Heatmap",
+        "tab": "ui_tab_thermal",
+        "order": 3,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "ui_grp_alarms",
+        "type": "ui_group",
+        "name": "Alarms & Alerts",
+        "tab": "ui_tab_thermal",
+        "order": 4,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "node_mqtt_temp",
+        "type": "mqtt in",
+        "z": "thermal_monitoring_flow",
+        "name": "Temperature",
+        "topic": "sensors/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "mqtt_broker_192",
+        "nl": false,
+        "rap": true,
+        "inputs": 0,
+        "x": 90,
+        "y": 240,
+        "wires": [
+            [
+                "node_json_parser"
+            ]
+        ]
+    },
+    {
+        "id": "node_json_parser",
+        "type": "json",
+        "z": "thermal_monitoring_flow",
+        "name": "json",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 280,
+        "y": 240,
+        "wires": [
+            [
+                "fn_extract_fused",
+                "fn_extract_s1",
+                "fn_extract_s2",
+                "fn_format_history",
+                "fn_format_map",
+                "fn_temp_alarm",
+                "fn_heading",
+                "fn_conn_status",
+                "fn_idw_heatmap"
+            ]
+        ]
+    },
+    {
+        "id": "fn_extract_fused",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Extract Fused Temp",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nmsg.payload = parseFloat(data.fusedTemp || data.temp || 0.0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 550,
+        "y": 20,
+        "wires": [
+            [
+                "ui_fused_box"
+            ]
+        ]
+    },
+    {
+        "id": "ui_fused_box",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_boxes",
+        "name": "Fused Temp Box",
+        "order": 1,
+        "width": "4",
+        "height": "2",
+        "format": "<div style=\"text-align:center;\"><h4>Fused Temp</h4><h2>{{msg.payload}} °C</h2></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 880,
+        "y": 20,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_extract_s1",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Extract Sensor 1",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nmsg.payload = parseFloat(data.sensor1 || data.temp1 || 0.0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 540,
+        "y": 100,
+        "wires": [
+            [
+                "ui_s1_box"
+            ]
+        ]
+    },
+    {
+        "id": "ui_s1_box",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_boxes",
+        "name": "Sensor 1 Box",
+        "order": 2,
+        "width": "4",
+        "height": "2",
+        "format": "<div style=\"text-align:center;\"><h4>Sensor 1</h4><h2>{{msg.payload}} °C</h2></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 870,
+        "y": 100,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_extract_s2",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Extract Sensor 2",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nmsg.payload = parseFloat(data.sensor2 || data.temp2 || 0.0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 540,
+        "y": 180,
+        "wires": [
+            [
+                "ui_s2_box"
+            ]
+        ]
+    },
+    {
+        "id": "ui_s2_box",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_boxes",
+        "name": "Sensor 2 Box",
+        "order": 3,
+        "width": "4",
+        "height": "2",
+        "format": "<div style=\"text-align:center;\"><h4>Sensor 2</h4><h2>{{msg.payload}} °C</h2></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 870,
+        "y": 180,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_format_history",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Format History",
+        "func": "var incoming = msg.payload;\nif (typeof incoming === 'string') {\n    try { incoming = JSON.parse(incoming); } catch(e) {}\n}\nvar obj = Array.isArray(incoming) ? incoming[0] : incoming;\nvar now = Date.now();\n\nvar s1Temp = parseFloat(obj.sensor1 || obj.temp1 || 0.0);\nvar s2Temp = parseFloat(obj.sensor2 || obj.temp2 || 0.0);\nvar fused  = parseFloat(obj.fusedTemp || obj.temp || 0.0);\n\nreturn [\n    { payload: s1Temp, topic: \"Sensor 1\", time: now },\n    { payload: s2Temp, topic: \"Sensor 2\", time: now },\n    { payload: fused,  topic: \"Fused Temperature\", time: now }\n];",
+        "outputs": 3,
+        "noerr": 0,
+        "x": 530,
+        "y": 300,
+        "wires": [
+            [
+                "chart_sensor1"
+            ],
+            [
+                "chart_sensor2"
+            ],
+            [
+                "chart_fused"
+            ]
+        ]
+    },
+    {
+        "id": "chart_sensor1",
+        "type": "ui_chart",
+        "z": "thermal_monitoring_flow",
+        "name": "Sensor 1",
+        "group": "ui_grp_charts",
+        "order": 1,
+        "width": "4",
+        "height": "4",
+        "label": "Sensor 1",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": ["#1f77b4","#aec7e8","#ff7f0e"],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 860,
+        "y": 260,
+        "wires": [[]]
+    },
+    {
+        "id": "chart_sensor2",
+        "type": "ui_chart",
+        "z": "thermal_monitoring_flow",
+        "name": "Sensor 2",
+        "group": "ui_grp_charts",
+        "order": 2,
+        "width": "4",
+        "height": "4",
+        "label": "Sensor 2",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": ["#1f77b4","#aec7e8","#ff7f0e"],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 860,
+        "y": 300,
+        "wires": [[]]
+    },
+    {
+        "id": "chart_fused",
+        "type": "ui_chart",
+        "z": "thermal_monitoring_flow",
+        "name": "Fused Temperature",
+        "group": "ui_grp_charts",
+        "order": 3,
+        "width": "4",
+        "height": "4",
+        "label": "Fused Temperature",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": ["#1f77b4","#aec7e8","#ff7f0e"],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 890,
+        "y": 340,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_format_map",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Format Map Data",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nvar lat = parseFloat(data.lat || 0.0);\nvar lon = parseFloat(data.lon || data.lng || 0.0);\n\nif (lat === 0.0 || lon === 0.0) return null;\n\nmsg.payload = {\n    name: \"Sensor Node 01\",\n    lat: lat,\n    lon: lon,\n    value: parseFloat(data.fusedTemp || data.temp || 0.0),\n    layer: \"Heatmap\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 540,
+        "y": 410,
+        "wires": [
+            [
+                "node_worldmap",
+                "ui_worldmap_view"
+            ]
+        ]
+    },
+    {
+        "id": "node_worldmap",
+        "type": "worldmap",
+        "z": "thermal_monitoring_flow",
+        "name": "worldmap",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "CartoDB Voyager",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "true",
+        "pan2loc": "true",
+        "footers": "false",
+        "rightclick": "false",
+        "toroutes": "false",
+        "x": 860,
+        "y": 400,
+        "wires": [[]]
+    },
+    {
+        "id": "ui_worldmap_view",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_map",
+        "name": "Worldmap View",
+        "order": 1,
+        "width": "12",
+        "height": "6",
+        "format": "<iframe src=\"/worldmap\" style=\"width:100%; height:400px; border:none;\"></iframe>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 880,
+        "y": 450,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_temp_alarm",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Temperature Alarm",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nvar temp = parseFloat(data.fusedTemp || data.temp || 0.0);\n\nif (temp > 40.0) {\n    var alarmMsg = { payload: \"HIGH TEMPERATURE ALARM: \" + temp + \" °C\", temp: temp };\n    return [alarmMsg, alarmMsg, alarmMsg];\n}\nreturn [null, null, null];",
+        "outputs": 3,
+        "noerr": 0,
+        "x": 540,
+        "y": 550,
+        "wires": [
+            [
+                "out_alarm_notif"
+            ],
+            [
+                "ui_alarm_audio"
+            ],
+            [
+                "ui_alarm_banner"
+            ]
+        ]
+    },
+    {
+        "id": "out_alarm_notif",
+        "type": "e-mail",
+        "z": "thermal_monitoring_flow",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "secure": true,
+        "tls": true,
+        "name": "Alarm Notification",
+        "dname": "Alarm Notification",
+        "x": 880,
+        "y": 510,
+        "wires": []
+    },
+    {
+        "id": "ui_alarm_audio",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_alarms",
+        "name": "Alarm Audio.",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "format": "<audio autoplay ng-if=\"msg.payload\"><source src=\"https://www.soundjay.com/buttons/sounds/beep-07a.mp3\" type=\"audio/mpeg\"></audio>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 860,
+        "y": 560,
+        "wires": [[]]
+    },
+    {
+        "id": "ui_alarm_banner",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_alarms",
+        "name": "Alarm Banner Card",
+        "order": 2,
+        "width": "12",
+        "height": "2",
+        "format": "<div ng-if=\"msg.payload\" style=\"background:#dc2626; color:#fff; padding:10px; border-radius:6px; font-weight:bold; text-align:center;\">{{msg.payload}}</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 880,
+        "y": 610,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_heading",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Heading",
+        "func": "msg.payload = \"IOT THERMAL MONITORING DASHBOARD\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 690,
+        "wires": [
+            [
+                "ui_dashboard_header"
+            ]
+        ]
+    },
+    {
+        "id": "ui_dashboard_header",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_boxes",
+        "name": "Dashboard Header",
+        "order": 0,
+        "width": "12",
+        "height": "1",
+        "format": "<h2 style=\"text-align:center; color:#38bdf8; font-family:sans-serif;\">{{msg.payload}}</h2>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 880,
+        "y": 690,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_conn_status",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "Node Connectivity Status",
+        "func": "return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 560,
+        "y": 810,
+        "wires": [
+            [
+                "ui_watchdog_template"
+            ]
+        ]
+    },
+    {
+        "id": "ui_watchdog_template",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_boxes",
+        "name": "template",
+        "order": 0,
+        "width": "12",
+        "height": "2",
+        "format": "<div style=\"background-color: {{connected ? '#064e3b' : '#450a0a'}}; border: 1px solid {{connected ? '#059669' : '#dc2626'}}; border-radius: 8px; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; color: #ffffff; font-family: monospace; transition: all 0.3s ease;\">\n    <div style=\"display: flex; align-items: center; gap: 12px;\">\n        <span style=\"font-weight: bold; font-size: 16px;\">NODE01</span>\n        <span style=\"background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; font-size: 12px;\">\n            {{connected ? 'CONNECTED / TRANSMITTING' : 'DISCONNECTED / NO SIGNAL'}}\n        </span>\n    </div>\n    <div style=\"display: flex; align-items: center; gap: 15px;\">\n        <span ng-if=\"connected\" style=\"font-size: 18px; font-weight: bold;\">{{temp}} °C</span>\n        <span style=\"display: flex; align-items: center; gap: 6px; font-weight: bold; color: {{connected ? '#34d399' : '#f87171'}};\">\n            <span style=\"height: 10px; width: 10px; background-color: {{connected ? '#34d399' : '#f87171'}}; border-radius: 50%; display: inline-block;\"></span>\n            {{connected ? 'ONLINE' : 'OFFLINE'}}\n        </span>\n    </div>\n</div>\n\n<script>\n(function(scope) {\n    var timeoutTimer = null;\n    var TIMEOUT_MS = 2000;\n    scope.connected = false;\n    scope.temp = '';\n\n    scope.$watch('msg', function(msg) {\n        if (!msg || msg.payload === undefined) return;\n        var raw = msg.payload;\n        var obj = Array.isArray(raw) ? raw[0] : raw;\n        if (typeof obj === 'object' && obj !== null) {\n            var t = parseFloat(obj.fusedTemp || obj.temp || obj.sensor1 || 25.0);\n            if (!isNaN(t)) scope.temp = t.toFixed(1);\n        } else if (typeof obj === 'number') {\n            scope.temp = obj.toFixed(1);\n        }\n        scope.connected = true;\n        if (timeoutTimer) clearTimeout(timeoutTimer);\n        timeoutTimer = setTimeout(function() {\n            scope.connected = false;\n            scope.temp = '';\n            scope.$apply();\n        }, TIMEOUT_MS);\n    });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 850,
+        "y": 810,
+        "wires": [[]]
+    },
+    {
+        "id": "fn_idw_heatmap",
+        "type": "function",
+        "z": "thermal_monitoring_flow",
+        "name": "IDW Heatmap Estimator",
+        "func": "var data = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nmsg.payload = {\n    lat: parseFloat(data.lat || 0.0),\n    lng: parseFloat(data.lon || data.lng || 0.0),\n    count: parseFloat(data.fusedTemp || data.temp || 0.0)\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 550,
+        "y": 920,
+        "wires": [
+            [
+                "ui_distributed_heatmap"
+            ]
+        ]
+    },
+    {
+        "id": "ui_distributed_heatmap",
+        "type": "ui_template",
+        "z": "thermal_monitoring_flow",
+        "group": "ui_grp_map",
+        "name": "Distributed Heatmap View",
+        "order": 2,
+        "width": "12",
+        "height": "6",
+        "format": "<div id=\"heatmapContainer\" style=\"width:100%; height:400px;\"></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 900,
+        "y": 920,
+        "wires": [[]]
+    }
+]
+
